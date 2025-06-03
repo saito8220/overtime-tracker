@@ -3,11 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <title>時間外勤務管理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    label, button { margin-top: 10px; display: block; }
-    h2 { color: #333; }
-    .result { margin-top: 20px; font-size: 1.2em; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f8f8f8;
+    }
+    h2 {
+      color: #333;
+      font-size: 1.5em;
+      text-align: center;
+    }
+    label {
+      margin-top: 15px;
+      display: block;
+      font-size: 1.1em;
+    }
+    input[type="time"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 1.1em;
+    }
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1em;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    button:active {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 25px;
+      padding: 10px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+      font-size: 1.2em;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      font-size: 0.95em;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #e0e0e0;
+    }
   </style>
 </head>
 <body>
@@ -27,6 +81,16 @@
     <p>合計時間外勤務（C）: <span id="totalOvertime"></span></p>
   </div>
 
+  <h3>📅 時間外勤務履歴</h3>
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>日付</th><th>出勤</th><th>退勤</th><th>始業前</th><th>終業後</th><th>合計</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
   <script>
     const WORK_START = "08:15";
     const WORK_END = "16:45";
@@ -39,8 +103,8 @@
     }
 
     function calculateOvertime() {
-      const startInput = document.getElementById("startTime").value;
-      const endInput = document.getElementById("endTime").value;
+      const startInput = document.getElementById("startTime").value.trim();
+      const endInput = document.getElementById("endTime").value.trim();
 
       if (!startInput || !endInput) {
         alert("出勤・退勤の両方の時刻を入力してください。");
@@ -52,6 +116,8 @@
         return h * 60 + m;
       };
 
+      const format = mins => `${Math.floor(mins / 60)}時間${mins % 60}分`;
+
       const startMinutes = toMinutes(startInput);
       const endMinutes = toMinutes(endInput);
       const workStartMin = toMinutes(WORK_START);
@@ -61,12 +127,41 @@
       const afterWork = Math.max(0, endMinutes - workEndMin);
       const totalOvertime = beforeWork + afterWork;
 
-      const format = mins => `${Math.floor(mins / 60)}時間${mins % 60}分`;
-
       document.getElementById("beforeWork").innerText = format(beforeWork);
       document.getElementById("afterWork").innerText = format(afterWork);
       document.getElementById("totalOvertime").innerText = format(totalOvertime);
+
+      const today = new Date().toISOString().slice(0, 10);
+      const newRecord = {
+        date: today,
+        start: startInput,
+        end: endInput,
+        before: format(beforeWork),
+        after: format(afterWork),
+        total: format(totalOvertime)
+      };
+
+      const records = JSON.parse(localStorage.getItem("overtimeLog") || "[]");
+      records.push(newRecord);
+      localStorage.setItem("overtimeLog", JSON.stringify(records));
+
+      renderLog();
     }
+
+    function renderLog() {
+      const records = JSON.parse(localStorage.getItem("overtimeLog") || "[]");
+      const tbody = document.getElementById("logTable").querySelector("tbody");
+      tbody.innerHTML = "";
+      for (let r of records) {
+        const row = `<tr>
+          <td>${r.date}</td><td>${r.start}</td><td>${r.end}</td>
+          <td>${r.before}</td><td>${r.after}</td><td>${r.total}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      }
+    }
+
+    window.onload = renderLog;
   </script>
 </body>
 </html>
