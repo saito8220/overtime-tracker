@@ -62,6 +62,14 @@
     th {
       background-color: #e0e0e0;
     }
+    .del-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -85,7 +93,7 @@
   <table id="logTable">
     <thead>
       <tr>
-        <th>日付</th><th>出勤</th><th>退勤</th><th>始業前</th><th>終業後</th><th>合計</th>
+        <th>日付</th><th>出勤</th><th>退勤</th><th>始業前</th><th>終業後</th><th>合計</th><th>操作</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -148,17 +156,25 @@
       renderLog();
     }
 
+    function deleteRecord(index) {
+      const records = JSON.parse(localStorage.getItem("overtimeLog") || "[]");
+      records.splice(index, 1);
+      localStorage.setItem("overtimeLog", JSON.stringify(records));
+      renderLog();
+    }
+
     function renderLog() {
       const records = JSON.parse(localStorage.getItem("overtimeLog") || "[]");
       const tbody = document.getElementById("logTable").querySelector("tbody");
       tbody.innerHTML = "";
-      for (let r of records) {
+      records.forEach((r, i) => {
         const row = `<tr>
           <td>${r.date}</td><td>${r.start}</td><td>${r.end}</td>
           <td>${r.before}</td><td>${r.after}</td><td>${r.total}</td>
+          <td><button class="del-btn" onclick="deleteRecord(${i})">削除</button></td>
         </tr>`;
         tbody.innerHTML += row;
-      }
+      });
     }
 
     window.onload = renderLog;
