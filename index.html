@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>時間外勤務管理</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    label, button { margin-top: 10px; display: block; }
+    h2 { color: #333; }
+    .result { margin-top: 20px; font-size: 1.2em; }
+  </style>
+</head>
+<body>
+  <h2>時間外勤務管理アプリ</h2>
+
+  <label>出勤時刻: <input type="time" id="startTime"></label>
+  <label>退勤時刻: <input type="time" id="endTime"></label>
+
+  <button onclick="setCurrentTime('startTime')">現在時刻を出勤にセット</button>
+  <button onclick="setCurrentTime('endTime')">現在時刻を退勤にセット</button>
+
+  <button onclick="calculateOvertime()">時間外勤務を計算</button>
+
+  <div class="result">
+    <p>始業前の時間外（A）: <span id="beforeWork"></span></p>
+    <p>終業後の時間外（B）: <span id="afterWork"></span></p>
+    <p>合計時間外勤務（C）: <span id="totalOvertime"></span></p>
+  </div>
+
+  <script>
+    const WORK_START = "09:00";
+    const WORK_END = "18:00";
+
+    function setCurrentTime(fieldId) {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById(fieldId).value = `${hours}:${minutes}`;
+    }
+
+    function calculateOvertime() {
+      const startInput = document.getElementById("startTime").value;
+      const endInput = document.getElementById("endTime").value;
+
+      if (!startInput || !endInput) {
+        alert("出勤・退勤の両方の時刻を入力してください。");
+        return;
+      }
+
+      const toMinutes = t => {
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
+      };
+
+      const startMinutes = toMinutes(startInput);
+      const endMinutes = toMinutes(endInput);
+      const workStartMin = toMinutes(WORK_START);
+      const workEndMin = toMinutes(WORK_END);
+
+      const beforeWork = Math.max(0, workStartMin - startMinutes);
+      const afterWork = Math.max(0, endMinutes - workEndMin);
+      const totalOvertime = beforeWork + afterWork;
+
+      const format = mins => `${Math.floor(mins / 60)}時間${mins % 60}分`;
+
+      document.getElementById("beforeWork").innerText = format(beforeWork);
+      document.getElementById("afterWork").innerText = format(afterWork);
+      document.getElementById("totalOvertime").innerText = format(totalOvertime);
+    }
+  </script>
+</body>
+</html>
