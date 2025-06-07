@@ -107,23 +107,30 @@
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById(fieldId).value = `${hours}:${minutes}`;
+      const timeStr = `${hours}:${minutes}`;
+      document.getElementById(fieldId).value = timeStr;
+      localStorage.setItem(fieldId, timeStr); // 入力値を保存
     }
 
     function calculateOvertime() {
-      const startInput = document.getElementById("startTime").value.trim();
-      const endInput = document.getElementById("endTime").value.trim();
+      const startEl = document.getElementById("startTime");
+      const endEl = document.getElementById("endTime");
+      const startInput = startEl.value.trim();
+      const endInput = endEl.value.trim();
 
       if (!startInput || !endInput) {
         alert("出勤・退勤の両方の時刻を入力してください。");
         return;
       }
 
+      // 入力値を保存
+      localStorage.setItem("startTime", startInput);
+      localStorage.setItem("endTime", endInput);
+
       const toMinutes = t => {
         const [h, m] = t.split(":").map(Number);
         return h * 60 + m;
       };
-
       const format = mins => `${Math.floor(mins / 60)}時間${mins % 60}分`;
 
       const startMinutes = toMinutes(startInput);
@@ -177,7 +184,17 @@
       });
     }
 
-    window.onload = renderLog;
+    function restoreInputs() {
+      const start = localStorage.getItem("startTime");
+      const end = localStorage.getItem("endTime");
+      if (start) document.getElementById("startTime").value = start;
+      if (end) document.getElementById("endTime").value = end;
+    }
+
+    window.onload = function () {
+      restoreInputs();
+      renderLog();
+    };
   </script>
 </body>
 </html>
