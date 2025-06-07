@@ -99,6 +99,8 @@
     <tbody></tbody>
   </table>
 
+  <button onclick="downloadCSV()" style="margin-top:15px;">📁 CSV出力</button>
+
   <script>
     const WORK_START = "08:15";
     const WORK_END = "16:45";
@@ -109,43 +111,33 @@
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const timeStr = `${hours}:${minutes}`;
       document.getElementById(fieldId).value = timeStr;
-      localStorage.setItem(fieldId, timeStr); // 入力値を保存
+      localStorage.setItem(fieldId, timeStr);
     }
 
     function calculateOvertime() {
-      const startEl = document.getElementById("startTime");
-      const endEl = document.getElementById("endTime");
-      const startInput = startEl.value.trim();
-      const endInput = endEl.value.trim();
-
+      const startInput = document.getElementById("startTime").value.trim();
+      const endInput = document.getElementById("endTime").value.trim();
       if (!startInput || !endInput) {
         alert("出勤・退勤の両方の時刻を入力してください。");
         return;
       }
-
-      // 入力値を保存
       localStorage.setItem("startTime", startInput);
       localStorage.setItem("endTime", endInput);
-
       const toMinutes = t => {
         const [h, m] = t.split(":").map(Number);
         return h * 60 + m;
       };
       const format = mins => `${Math.floor(mins / 60)}時間${mins % 60}分`;
-
       const startMinutes = toMinutes(startInput);
       const endMinutes = toMinutes(endInput);
       const workStartMin = toMinutes(WORK_START);
       const workEndMin = toMinutes(WORK_END);
-
       const beforeWork = Math.max(0, workStartMin - startMinutes);
       const afterWork = Math.max(0, endMinutes - workEndMin);
       const totalOvertime = beforeWork + afterWork;
-
       document.getElementById("beforeWork").innerText = format(beforeWork);
       document.getElementById("afterWork").innerText = format(afterWork);
       document.getElementById("totalOvertime").innerText = format(totalOvertime);
-
       const today = new Date().toISOString().slice(0, 10);
       const newRecord = {
         date: today,
@@ -155,11 +147,9 @@
         after: format(afterWork),
         total: format(totalOvertime)
       };
-
       const records = JSON.parse(localStorage.getItem("overtimeLog") || "[]");
       records.push(newRecord);
       localStorage.setItem("overtimeLog", JSON.stringify(records));
-
       renderLog();
     }
 
@@ -189,6 +179,22 @@
       const end = localStorage.getItem("endTime");
       if (start) document.getElementById("startTime").value = start;
       if (end) document.getElementById("endTime").value = end;
+    }
+
+    function downloadCSV() {
+      const records = JSON.parse(localStorage.getItem("overtimeLog") || "[]");
+      if (records.length === 0) {
+        alert("履歴が空です");
+        return;
+      }
+      const header = ["日付","出勤","退勤","始業前","終業後","合計"];
+      const rows = records.map(r => [r.date, r.start, r.end, r.before, r.after, r.total]);
+      const csvContent = [header, ...rows].map(e => e.join(",")).join("\\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "overtime_log.csv";
+      link.click();
     }
 
     window.onload = function () {
